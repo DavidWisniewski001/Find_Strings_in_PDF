@@ -1,0 +1,42 @@
+import os
+import shutil
+import PyPDF2
+
+def search_and_copy_pdfs(input_folder, output_folder, search_string):
+    # Create the output folder if it doesn't exist
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+    
+    # Iterate through each file in the input folder
+    for filename in os.listdir(input_folder):
+        if filename.endswith('.pdf'):
+            file_path = os.path.join(input_folder, filename)
+            
+            # Open the PDF file
+            pdf_file = open(file_path, 'rb')
+            pdf_reader = PyPDF2.PdfReader(pdf_file)
+            
+            # Iterate through each page of the PDF
+            for page_num in range(pdf_reader.numPages):
+                page = pdf_reader.getPage(page_num)
+                text = page.extractText()
+                
+                # Check if the search string is present in the page
+                if search_string in text:
+                    # Copy the PDF file to the output folder
+                    shutil.copy2(file_path, os.path.join(output_folder, filename))
+                    print(f"Found '{search_string}' in '{filename}'. Copied to '{output_folder}'")
+                    break
+            
+            # Close the PDF file
+            pdf_file.close()
+
+
+### Trouble_Shooting
+
+# Example usage
+input_folder = r'C:\Users\DWisniew\Documents\Project Documentation\Spec. Sheet\PDFs'
+output_folder = r'C:\SharePoint Sync\OneDrive - Nidec\Documents\Project_Documentation\SPEC. Sheets\3014387-CHR'
+search_string = 'XN1E'
+
+search_and_copy_pdfs(input_folder, output_folder, search_string)
