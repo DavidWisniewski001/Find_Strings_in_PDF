@@ -1,0 +1,95 @@
+import os
+import shutil
+import csv
+import fitz  # PyMuPDF
+import tkinter as tk
+from tkinter import filedialog
+
+def search_and_copy_pdfs(input_folder, output_folder, search_strings):
+    # Create the output folder if it doesn't exist
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+    
+    # Iterate through each file in the input folder
+    for filename in os.listdir(input_folder):
+        if filename.endswith('.pdf'):
+            file_path = os.path.join(input_folder, filename)
+            
+            # Open the PDF file using PyMuPDF (fitz)
+            pdf_document = fitz.open(file_path)
+            
+            # Iterate through each page of the PDF
+            for page_num in range(len(pdf_document)):
+                page = pdf_document[page_num]
+                text = page.get_text()
+                
+                # Check if any of the search strings are present in the page
+                for search_string in search_strings:
+                    if search_string in text:
+                        # Copy the PDF file to the output folder
+                        shutil.copy2(file_path, os.path.join(output_folder, filename))
+                        print(f"Found '{search_string}' in '{filename}'. Copied to '{output_folder}'")
+                        break
+            
+            # Close the PDF file
+            pdf_document.close()
+
+def browse_input_folder():
+    global input_folder_entry
+    input_folder = filedialog.askdirectory()
+    input_folder_entry.delete(0, tk.END)
+    input_folder_entry.insert(0, input_folder)
+
+def browse_output_folder():
+    global output_folder_entry
+    output_folder = filedialog.askdirectory()
+    output_folder_entry.delete(0, tk.END)
+    output_folder_entry.insert(0, output_folder)
+
+def start_search():
+    input_folder = input_folder_entry.get()
+    output_folder = output_folder_entry.get()
+    csv_file = csv_file_entry.get()
+    
+    # Read the CSV file to get search strings
+    search_strings = []
+    with open(csv_file, newline='') as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            search_strings.append(row[0])
+    
+    search_and_copy_pdfs(input_folder, output_folder, search_strings)
+
+# Create the main window
+window = tk.Tk()
+window.title("PDF Search and Copy")
+
+# Input Folder
+input_folder_label = tk.Label(window, text="Input Folder:")
+input_folder_label.pack()
+input_folder_entry = tk.Entry(window)
+input_folder_entry.pack()
+browse_input_button = tk.Button(window, text="Browse", command=browse_input_folder)
+browse_input_button.pack()
+
+# Output Folder
+output_folder_label = tk.Label(window, text="Output Folder:")
+output_folder_label.pack()
+output_folder_entry = tk.Entry(window)
+output_folder_entry.pack()
+browse_output_button = tk.Button(window, text="Browse", command=browse_output_folder)
+browse_output_button.pack()
+
+# CSV File
+csv_file_label = tk.Label(window, text="CSV File:")
+csv_file_label.pack()
+csv_file_entry = tk.Entry(window)
+csv_file_entry.pack()
+browse_csv_button = tk.Button(window, text="Browse", command=lambda: csv_file_entry.insert(tk.END, filedialog.askopenfilename()))
+browse_csv_button.pack()
+
+# Start Search Button
+start_search_button = tk.Button(window, text="Start Search", command=start_search)
+start_search_button.pack()
+
+window.mainloop()
